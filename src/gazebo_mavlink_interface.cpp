@@ -448,6 +448,13 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
     return;
   }
 
+  //unreal integration
+  if ((_fd_unreal=socket(AF_INET, SOCK_DGRAM, 0)) <0 ){
+    printf("create socket unreal failed\n");
+    return;
+  }; 
+
+
   memset((char *)&_myaddr, 0, sizeof(_myaddr));
   _myaddr.sin_family = AF_INET;
   _myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -591,6 +598,41 @@ void GazeboMavlinkInterface::send_mavlink_message(const uint8_t msgid, const voi
   }
 }
 
+void GazeboMavlinkInterface::sendUnreal(){
+  int len=0;
+  static int sitl_position_port=0;
+  char tmpstr[1024];
+  
+  static uint64_t last_sent_mili=0;
+
+  if ((world_->GetSimTime().nsec/1000000-last_sent_mili)<33) return; //~30 Hz
+
+  struct sockaddr_in _dstaddr;
+
+  memset((char*) &_dstaddr,0,sizeof(_dstaddr));
+  _dstaddr.sin_family = AF_INET;
+  inet_aton("127.0.0.1",&_dstaddr.sin_addr);
+  //ssize_t _addrlen = sizeof(_dstaddr);
+
+  math::Vector3 position = model_->GetWorldPose().pos; //ENU 
+
+
+  //todo: add euler angels
+  sprintf(tmpstr,"%lf %lf %lf %lf %lf %lf\n",position.x, position.y, position.z, 0.0,0.0,0.0);
+
+  if (sitl_position_port==0) sitl_position_port=atoi(getenv("SITL_POSITION_PORT"));
+  _dstaddr.sin_port = htons(sitl_position_port);
+    
+  len = sendto(_fd_unreal, tmpstr, strlen(tmpstr), 0, (struct sockaddr *)&_dstaddr, sizeof(_dstaddr));
+
+  if (len <= 0) {
+    printf("Failed sending unreal message %d try send %d %ld \n",len,strlen(tmpstr), last_sent_mili);
+  } else {
+   // printf("sent unreal\n");
+  }
+  last_sent_mili=world_->GetSimTime().nsec/1000000;
+}
+
 void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
 
   // frames
@@ -722,6 +764,7 @@ void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
   hil_state_quat.zacc = accel_true_b.z * 1000;
 
   send_mavlink_message(MAVLINK_MSG_ID_HIL_STATE_QUATERNION, &hil_state_quat, 200);
+  sendUnreal();
 }
 
 void GazeboMavlinkInterface::LidarCallback(LidarPtr& lidar_message) {

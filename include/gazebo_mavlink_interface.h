@@ -156,6 +156,8 @@ class GazeboMavlinkInterface : public ModelPlugin {
   void handle_message(mavlink_message_t *msg);
   void pollForMAVLinkMessages(double _dt, uint32_t _timeoutMs);
 
+  void sendUnreal();
+
   static const unsigned n_out_max = 16;
 
   unsigned _rotor_count;
@@ -193,6 +195,8 @@ class GazeboMavlinkInterface : public ModelPlugin {
   std::normal_distribution<float> standard_normal_distribution_;
 
   int _fd;
+  int _fd_unreal;
+
   struct sockaddr_in _myaddr;  ///< The locally bound address
   struct sockaddr_in _srcaddr;  ///< SITL instance
   socklen_t _addrlen;
