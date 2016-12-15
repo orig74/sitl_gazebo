@@ -618,8 +618,6 @@ void GazeboMavlinkInterface::sendUnreal(){
   math::Vector3 position = model_->GetWorldPose().pos; //ENU 
   math::Quaternion q = model_->GetWorldPose().rot;
 
-
-  //todo: add euler angels
   sprintf(tmpstr,"%lf %lf %lf %lf %lf %lf\n",position.x, position.y, position.z, q.GetRoll(),q.GetPitch(),q.GetYaw());
 
   if (sitl_position_port==0) sitl_position_port=atoi(getenv("SITL_POSITION_PORT"));
