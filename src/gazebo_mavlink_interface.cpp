@@ -559,6 +559,7 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
 
     last_gps_time_ = current_time;
   }
+  sendUnreal();
 }
 
 void GazeboMavlinkInterface::send_mavlink_message(const uint8_t msgid, const void *msg, uint8_t component_ID) {
@@ -615,10 +616,11 @@ void GazeboMavlinkInterface::sendUnreal(){
   //ssize_t _addrlen = sizeof(_dstaddr);
 
   math::Vector3 position = model_->GetWorldPose().pos; //ENU 
+  math::Quaternion q = model_->GetWorldPose().rot;
 
 
   //todo: add euler angels
-  sprintf(tmpstr,"%lf %lf %lf %lf %lf %lf\n",position.x, position.y, position.z, 0.0,0.0,0.0);
+  sprintf(tmpstr,"%lf %lf %lf %lf %lf %lf\n",position.x, position.y, position.z, q.GetRoll(),q.GetPitch(),q.GetYaw());
 
   if (sitl_position_port==0) sitl_position_port=atoi(getenv("SITL_POSITION_PORT"));
   _dstaddr.sin_port = htons(sitl_position_port);
@@ -764,7 +766,7 @@ void GazeboMavlinkInterface::ImuCallback(ImuPtr& imu_message) {
   hil_state_quat.zacc = accel_true_b.z * 1000;
 
   send_mavlink_message(MAVLINK_MSG_ID_HIL_STATE_QUATERNION, &hil_state_quat, 200);
-  sendUnreal();
+  //sendUnreal();
 }
 
 void GazeboMavlinkInterface::LidarCallback(LidarPtr& lidar_message) {
