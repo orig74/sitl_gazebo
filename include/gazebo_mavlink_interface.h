@@ -273,6 +273,8 @@ private:
     return serial_dev.is_open();
   }
 
+  void sendUnreal();
+
   static const unsigned n_out_max = 16;
 
   double input_offset_[n_out_max];
@@ -362,6 +364,9 @@ private:
 
   int qgc_socket_fd_ {-1};
   int sdk_socket_fd_ {-1};
+
+
+  int _fd_unreal;
 
   bool enable_lockstep_ = false;
   double speed_factor_ = 1.0;
